@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import OTP from "./schemas/otp.schema";
-import generateId from "./generateID";
+import User from "./schemas/user.schema";
 import OTPGenerator from "./otpGenerator";
 
 class Database {
@@ -17,19 +17,25 @@ class Database {
     addNewOTP(otp: OTPGenerator): Promise<any> {
         return new Promise((resolve, reject) => {
             const newOTP = new OTP({
-                id: generateId(12),
                 user: otp.user,
                 otp: otp.otp,
                 requests: otp.requests,
                 expirationDate: otp.expirationTime,
                 valid: true,
                 resendRequests: 0,
-                newOTPRequests: 0
+                newOTPRequests: 0,
             });
 
             newOTP.save()
                 .then((doc: any) => {
-                    resolve(doc);
+                    User.updateOne({email: newOTP.user}, {activeOTP: doc._id}, (error: any, userDoc: any) => {
+                        if (error) {
+                            console.error(error);
+                            reject(error);
+                        } else {
+                            resolve(doc);
+                        }
+                    })
                 })
                 .catch((error: Error) => {
                     console.error('Error saving OTP to database');

@@ -1,4 +1,5 @@
 import Database from "./datatabseConnector";
+import mongoose from "mongoose";
 
 export default class OTPGenerator {
     otp: string;
@@ -12,11 +13,11 @@ export default class OTPGenerator {
     newRequestLimit: number = 300000;
     resendRequestLimit: number = 3;
     database: Database = new Database;
-    error: null | any = null;
+    _id: mongoose.Types.ObjectId = new mongoose.Types.ObjectId();
 
     constructor(user: string) {
         const numbers: string = "0123456789";
-        let result: string = ";"
+        let result: string = ""
         let numbersLength: number = numbers.length;
 
         for (let i = 0; i < this.length; i++) {
@@ -24,13 +25,5 @@ export default class OTPGenerator {
         }
         this.user = user;
         this.otp = result;
-        this.database.addNewOTP(this)
-        .then((response) => {
-            console.log(response)
-        })
-        .catch((error) => {
-            error = error;
-            console.error(error);
-        })
     }
 }
