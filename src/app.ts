@@ -1,8 +1,8 @@
 import * as dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
-import router from './routes/router_otp'
-import Database from "./helpers/datatabseConnector";
+import router from '../routes/router_otp'
+import Database from "../helpers/datatabseConnector";
 
 dotenv.config();
 

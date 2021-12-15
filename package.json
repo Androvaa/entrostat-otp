@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "nodemon app.ts",
+    "dev": "nodemon src/app.ts",
     "start": "npx ts-node src/app.ts"
   },
   "dependencies": {
