@@ -133,6 +133,7 @@ router.get('/new', (req, res) => {
 
 router.post('/resend', (req, res) => {
     let user = req.body.email;
+    let newOTP = new OTPGenerator(user);
 
     if (!user)
         res.status(400)
@@ -142,7 +143,7 @@ router.post('/resend', (req, res) => {
             });
 
     User.findOne({ user: user }, (userError: any, userDoc: any) => {
-        if (error) {
+        if (userError) {
             console.error(userError);
             res.json({
                 success: false,
@@ -159,10 +160,85 @@ router.post('/resend', (req, res) => {
                 })
             }
 
-            OTP.updateOne({ _id: userDoc.activeOTP }, { expirationDate: new Date().getTime() + 86400000, resendRequests: doc.resendRequests + 1 }, (updateError: any, updateDoc: any) => {
-
-            })
+            if ((new Date().getTime() - new Date(doc.generatedDate).getTime()) <= newOTP.resendRequestLimit) {
+                if (userDoc.resendOTPRequests)
+                    OTP.updateOne({ _id: userDoc.activeOTP }, { expirationDate: new Date().getTime() + 86400000, resendRequests: doc.resendRequests + 1 }, (updateError: any, updateDoc: any) => {
+                        if (updateError) {
+                            console.error(updateError);
+                            res.json({
+                                success: false,
+                                error: updateError
+                            })
+                        }
+                        User.updateOne({ user: user }, { resentOTPRequests: userDoc.resendRequests + 1 }, (userUpdateError: any, userUpdateDoc: any) => {
+                            if (error) {
+                                console.error(error);
+                                res.json({
+                                    success: error,
+                                    error: error
+                                })
+                            }
+                            res.json({
+                                success: true,
+                                otp: doc.otp,
+                                expirationTime: doc.expirationTime
+                            })
+                        })
+                    })
+            } else {
+                res.json({
+                    success: true,
+                    message: "Please request a new OTP."
+                })
+            }
         })
+    })
+})
+
+router.post('/send', (req, res) => {
+    let otp = req.body.otp;
+    let user = req.body.user;
+
+    if (!user)
+        res.status(400)
+            .json({
+                success: true,
+                error: "No user email found"
+            })
+    if (!otp)
+        res.status(400)
+            .json({
+                success: true,
+                error: "No OTP found"
+            })
+
+    OTP.findOne({otp: otp, user: user, valid: true}, (error: any, doc: any) => {
+        if (error) {
+            console.error(error);
+            res.json({
+                success: false,
+                error: error
+            })
+        } else if (!doc) {
+            res.json({
+                success: true,
+                message: "OTP not found"
+            })
+        } else {
+            OTP.updateOne({otp: otp, user: user}, {valid: false}, (otpError: any, otpDoc: any) => {
+                if (error) {
+                    console.error(error);
+                    res.json({
+                        success: false,
+                        error: error
+                    })
+                }
+                res.json({
+                    success: true,
+                    message: "OTP successfully used"
+                })
+            })
+        }
     })
 })
 
