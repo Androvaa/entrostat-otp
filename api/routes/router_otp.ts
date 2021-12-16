@@ -51,6 +51,7 @@ router.get('/new', (req, res) => {
                             })
                             newUser.save()
                                 .then((doc: any) => {
+
                                     res.json({
                                         success: true,
                                         otp: newOTP.otp,
